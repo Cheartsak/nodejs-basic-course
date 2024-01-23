@@ -31,9 +31,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 /**
- * `upload.single("image")` is a middleware function that processes the file
- * upload for a single file where the field name is "image". This function runs
- * before the final function in the chain.
+ * `upload.single("image")` is a middleware function that return a handler to
+ * processes a single file.It looks for a file in the request body with the name
+ * "image". This function runs before the final function in the chain.
  */
 app.patch("/todos/:todoId/uploads", upload.single("image"), (req, res) => {
   const { filename } = req.file;
@@ -101,22 +101,28 @@ app.post("/todos", (req, res) => {
 
 app.put("/todos/:todoId", (req, res) => {
   const todoId = parseInt(req.params.todoId, 10);
-  const attributes = req.body;
-  const updatedTodo = updateTodo(todoId, attributes);
-
-  if (!updatedTodo) {
+  const todo = findTodo(todoId);
+  if (!todo) {
     res.status(404).json({ error: { message: "todo not found" } });
     return;
   }
+
+  const defaultAttributes = {
+    title: "",
+    description: "",
+    isDone: false,
+    imagePath: undefined,
+  };
+  const updateAttributes = { ...defaultAttributes, ...req.body };
+  const updatedTodo = updateTodo(todo.id, updateAttributes);
 
   res.json({ data: updatedTodo });
 });
 
 app.patch("/todos/:todoId", (req, res) => {
   const todoId = parseInt(req.params.todoId, 10);
-  const isDone = req.body.isDone;
-  const updatedTodo = updateTodo(todoId, { isDone });
-
+  const reqBody = req.body;
+  const updatedTodo = updateTodo(todoId, reqBody);
   if (!updatedTodo) {
     res.status(404).json({ error: { message: "todo not found" } });
     return;

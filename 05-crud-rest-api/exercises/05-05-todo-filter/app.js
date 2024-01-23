@@ -17,14 +17,24 @@ app.get("/todos", (req, res) => {
   const query = req.query;
   const filters = Object.entries(query).map(([key, value]) => {
     switch (key) {
+      // compare todo.id with the object's value based on the key
       case "id":
-        return (todo) => todo.id === parseInt(value, 10);
+        return (todo) => {
+          // Hint: use parseInt() to convert string to number
+        };
       case "isDone":
-        return (todo) => todo.isDone === (value === "true");
+        return (todo) => {
+          // Hint: use === to compare boolean values
+          // This is a tricky one, because the query string is a string,
+        };
       case "title":
-        return (todo) => todo.title.includes(value);
+        return (todo) => {
+          // Hint: use includes() to check if the string includes the value
+        };
       case "description":
-        return (todo) => todo.description.includes(value);
+        return (todo) => {
+          // Hint: use includes() to check if the string includes the value
+        };
       default:
         return () => true;
     }
@@ -68,22 +78,28 @@ app.post("/todos", (req, res) => {
 
 app.put("/todos/:todoId", (req, res) => {
   const todoId = parseInt(req.params.todoId, 10);
-  const attributes = req.body;
-  const updatedTodo = updateTodo(todoId, attributes);
-
-  if (!updatedTodo) {
+  const todo = findTodo(todoId);
+  if (!todo) {
     res.status(404).json({ error: { message: "todo not found" } });
     return;
   }
+
+  const defaultAttributes = {
+    title: "",
+    description: "",
+    isDone: false,
+    imagePath: undefined,
+  };
+  const updateAttributes = { ...defaultAttributes, ...req.body };
+  const updatedTodo = updateTodo(todo.id, updateAttributes);
 
   res.json({ data: updatedTodo });
 });
 
 app.patch("/todos/:todoId", (req, res) => {
   const todoId = parseInt(req.params.todoId, 10);
-  const isDone = req.body.isDone;
-  const updatedTodo = updateTodo(todoId, { isDone });
-
+  const reqBody = req.body;
+  const updatedTodo = updateTodo(todoId, reqBody);
   if (!updatedTodo) {
     res.status(404).json({ error: { message: "todo not found" } });
     return;

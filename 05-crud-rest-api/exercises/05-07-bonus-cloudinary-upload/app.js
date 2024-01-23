@@ -1,6 +1,7 @@
+import "dotenv/config";
 import express from "express";
 import multer from "multer";
-import { v4 as uuidv4 } from "uuid";
+import { v2 as cloudinary } from "cloudinary";
 
 import {
   findTodo,
@@ -10,17 +11,23 @@ import {
   deleteTodo,
 } from "../05-99-model/todo.mjs";
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "./public/uploads");
-  },
-  filename: function (req, file, cb) {
-    const name = uuidv4();
-    const extension = file.mimetype.split("/")[1];
-    const filename = `${name}.${extension}`;
-    cb(null, filename);
-  },
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
 });
+
+async function uploadToCloudinary(req, res, next) {
+  const fileBufferBase64 = Buffer.from(req.file.buffer).toString("base64");
+  const base64File = `data:${req.file.mimetype};base64,${fileBufferBase64}`;
+  req.cloudinary = await cloudinary.uploader.upload(base64File, {
+    resource_type: "auto",
+  });
+
+  next();
+}
+
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 const app = express();
@@ -30,16 +37,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-app.patch("/todos/:todoId/uploads", upload.single("image"), (req, res) => {
-  const { filename } = req.file;
-  const todoId = parseInt(req.params.todoId, 10);
-  const updatedTodo = updateTodo(todoId, { imagePath: `/uploads/${filename}` });
-  if (!updatedTodo) {
-    res.status(404).json({ error: { message: "todo not found" } });
-  }
+app.patch(
+  "/todos/:todoId/uploads",
+  upload.single("image"),
+  uploadToCloudinary,
+  (req, res) => {
+    const todoId = parseInt(req.params.todoId, 10);
+    const updatedTodo = updateTodo(todoId, {
+      imagePath: req.cloudinary.secure_url,
+    });
+    if (!updatedTodo) {
+      res.status(404).json({ error: { message: "todo not found" } });
+    }
 
-  res.json({ data: updatedTodo });
-});
+    res.json({ data: updatedTodo });
+  }
+);
 
 app.get("/todos", (req, res) => {
   const query = req.query;
@@ -96,22 +109,28 @@ app.post("/todos", (req, res) => {
 
 app.put("/todos/:todoId", (req, res) => {
   const todoId = parseInt(req.params.todoId, 10);
-  const attributes = req.body;
-  const updatedTodo = updateTodo(todoId, attributes);
-
-  if (!updatedTodo) {
+  const todo = findTodo(todoId);
+  if (!todo) {
     res.status(404).json({ error: { message: "todo not found" } });
     return;
   }
+
+  const defaultAttributes = {
+    title: "",
+    description: "",
+    isDone: false,
+    imagePath: undefined,
+  };
+  const updateAttributes = { ...defaultAttributes, ...req.body };
+  const updatedTodo = updateTodo(todo.id, updateAttributes);
 
   res.json({ data: updatedTodo });
 });
 
 app.patch("/todos/:todoId", (req, res) => {
   const todoId = parseInt(req.params.todoId, 10);
-  const isDone = req.body.isDone;
-  const updatedTodo = updateTodo(todoId, { isDone });
-
+  const reqBody = req.body;
+  const updatedTodo = updateTodo(todoId, reqBody);
   if (!updatedTodo) {
     res.status(404).json({ error: { message: "todo not found" } });
     return;

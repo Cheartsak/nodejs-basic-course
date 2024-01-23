@@ -14,7 +14,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/todos", (req, res) => {
-  const todos = listTodo();
+  const query = req.query;
+  const filters = Object.entries(query).map(([key, value]) => {
+    switch (key) {
+      case "id":
+        return (todo) => todo.id === parseInt(value, 10);
+      case "isDone":
+        return (todo) => todo.isDone === (value === "true");
+      case "title":
+        return (todo) => todo.title.includes(value);
+      case "description":
+        return (todo) => todo.description.includes(value);
+      default:
+        return () => true;
+    }
+  });
+  const todos = listTodo(filters);
   res.json({ data: todos });
 });
 
@@ -53,27 +68,34 @@ app.post("/todos", (req, res) => {
 
 app.put("/todos/:todoId", (req, res) => {
   const todoId = parseInt(req.params.todoId, 10);
-  const attributes = req.body;
-  const updatedTodo = updateTodo(todoId, attributes);
+  const todo = findTodo(todoId);
+  if (!todo) {
+    res.status(404).json({ error: { message: "todo not found" } });
+    return;
+  }
 
+  const defaultAttributes = {
+    title: "",
+    description: "",
+    isDone: false,
+    imagePath: undefined,
+  };
+  const updateAttributes = { ...defaultAttributes, ...req.body };
+  const updatedTodo = updateTodo(todo.id, updateAttributes);
+
+  res.json({ data: updatedTodo });
+});
+
+app.patch("/todos/:todoId", (req, res) => {
+  const todoId = parseInt(req.params.todoId, 10);
+  const reqBody = req.body;
+  const updatedTodo = updateTodo(todoId, reqBody);
   if (!updatedTodo) {
     res.status(404).json({ error: { message: "todo not found" } });
     return;
   }
 
   res.json({ data: updatedTodo });
-});
-
-app.patch("/todos/:todoId", (req, res) => {
-  /**
-   * 1. Get the `todoId` from req.params
-   * 2. Parse the `todoId` to integer
-   * 3. Read `isDone` from `req.body`
-   * 4. Call `updateTodo` with `todoId` and `isDone` attribute
-   * 5. If `updateTodo` returns `undefined`, return 404
-   * 6. Else, return the updated todo
-   */
-  throw new Error("Not implemented");
 });
 
 app.delete("/todos/:todoId", (req, res) => {
