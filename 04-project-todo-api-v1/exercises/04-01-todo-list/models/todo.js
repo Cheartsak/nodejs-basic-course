@@ -7,10 +7,10 @@ const todoDatabase = [
 
 export const listTodos = () => {
   // 1. Implement logic here to list all todos
-  throw new Error("Not implemented");
+  return todoDatabase;
 };
 
 export const findTodo = (todoId) => {
   // 2. Implement logic here to find a single todo by id
-  throw new Error("Not implemented");
+  return todoDatabase.find((list) => list.id === todoId);
 };

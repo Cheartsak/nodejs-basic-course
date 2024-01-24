@@ -28,14 +28,18 @@ app.post("/todos", (req, res) => {
   const { title, description } = req.body;
 
   // Create a new todo using the `createTodo` function (imported from the model, line: 2)
-  // const todo = ...
+  if (title === "" || description === "") {
+    res.json({ message: "title and description can't be empty" });
+    return;
+  }
+  const todo = createTodo({ title, description });
 
   // Return the newly created todo with a 201 status code
-  // res.status(201).json({
-  //   data: todo,
-  // });
+  res.status(201).json({
+    data: todo,
+  });
 
-  throw new Error("Not implemented");
+  // throw new Error("Not implemented");
 });
 
 app.listen(port, () => {
