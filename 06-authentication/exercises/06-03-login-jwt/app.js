@@ -59,15 +59,15 @@ app.post("/login", (req, res) => {
 
   // 🍎 Implement: 5.1. Instead of `{"status": "ok"}`,
   //    return `{ token: "..." }` with JWT inside.
-  res.send({ status: "ok" });
+  res.send({ token: createJwt(email) });
 });
 
 function createJwt(email) {
   // 🍎 Implement: 4.1. Store the value from `process.env.JWT_SECRET_KEY` in .env to `jwtSecretKey`.
-  const jwtSecretKey = "Replace this with your JWT secret key from .env";
+  const jwtSecretKey = process.env.JWT_SECRET_KEY;
 
   // 🍎 Implement: 4.2. Create a JWT with `jwt.sign(..)`. The token must expire in 3 hours.
-  const token = "Replace this with your JWT sign code";
+  const token = jwt.sign({ id: email }, jwtSecretKey, { expiresIn: "3h" });
 
   return token;
 }

@@ -14,32 +14,48 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/todos", (req, res) => {
+  console.log(req.query);
   const query = req.query;
   const filters = Object.entries(query).map(([key, value]) => {
     switch (key) {
       // compare todo.id with the object's value based on the key
+      // todo = user object from todo.mjs file
       case "id":
         return (todo) => {
           // Hint: use parseInt() to convert string to number
+          return todo.id === Number(value);
         };
       case "isDone":
         return (todo) => {
           // Hint: use === to compare boolean values
           // This is a tricky one, because the query string is a string,
+          let checkValue;
+          if (value === "false") {
+            checkValue = false;
+          }
+          if (value === "true") {
+            checkValue = true;
+          }
+          console.log(checkValue);
+          return todo.isDone === checkValue;
         };
       case "title":
         return (todo) => {
           // Hint: use includes() to check if the string includes the value
+          return todo.title.includes(value);
         };
       case "description":
         return (todo) => {
           // Hint: use includes() to check if the string includes the value
+          return todo.description.includes(value);
         };
       default:
         return () => true;
     }
   });
+  console.log(filters);
   const todos = listTodo(filters);
+  console.log(todos);
   res.json({ data: todos });
 });
 

@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import "dotenv/config.js";
 
 import { User } from "./models/user.js";
+import { auth } from "./middlewares/auth.js";
 
 const app = express();
 const port = 8000;
@@ -72,12 +73,12 @@ function createJwt(email) {
 
 // Protecting a route
 // 🍎 Implement: 3.1. Use `auth` middleware in `GET /profile` and `GET /secret`.
-app.get("/profile", (req, res) => {
+app.get("/profile", auth, (req, res) => {
   console.log(req.user);
   res.json({ data: { email: req.user.id } });
 });
 
-app.get("/secret", (req, res) => {
+app.get("/secret", auth, (req, res) => {
   res.json({ data: { message: "Welcome to the secret area." } });
 });
 

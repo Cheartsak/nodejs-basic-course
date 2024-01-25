@@ -91,7 +91,13 @@ app.delete("/todos/:todoId", (req, res) => {
    * 4. If `deleteTodo` returns `undefined`, return 404
    * 5. Else, return 200 success
    */
-  throw new Error("Not implemented");
+  const { todoId } = req.params;
+  deleteTodo(Number(todoId));
+  if (!deleteTodo) {
+    res.status(404).json({ message: "undefined" });
+    return;
+  }
+  res.json({ message: "success" });
 });
 
 app.listen(port, () => {
