@@ -73,12 +73,12 @@ function createJwt(email) {
 
 // Protecting a route
 // 🍎 Implement: 3.1. Use `auth` middleware in `GET /profile` and `GET /secret`.
-app.get("/profile", (req, res) => {
+app.get("/profile", auth, (req, res) => {
   console.log(req.user);
   res.json({ data: { email: req.user.id } });
 });
 
-app.get("/secret", (req, res) => {
+app.get("/secret", auth, (req, res) => {
   res.json({ data: { message: "Welcome to the secret area." } });
 });
 
