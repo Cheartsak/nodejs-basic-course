@@ -43,7 +43,13 @@ app.patch("/todos/:todoId/uploads", upload.single("image"), (req, res) => {
    * 3. If the todo is not found, return a 404 error
    * 4. Return the updated todo
    */
-  throw new Error("Not implemented");
+  const todoId = parseInt(req.params.todoId, 10);
+  const updatedTodo = updateTodo(todoId, { imagePath: `/uploads/${filename}` });
+  if (!updatedTodo) {
+    res.status(404).json({ error: { message: "todo not found" } });
+  }
+
+  res.json({ data: updatedTodo });
 });
 
 app.get("/todos", (req, res) => {
